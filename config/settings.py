@@ -4,10 +4,10 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # ── LLM ──────────────────────────────────────────────────────────────────
-    llm_provider: Literal["ollama", "openai"] = "ollama"
+    llm_provider: Literal["ollama", "openai"] = "ollama" # set here
     llm_model: str = "llama3.2:3b"
     ollama_base_url: str = "http://localhost:11434"
-    openai_api_key: str = ""
+    # openai_api_key: str = ""
     temperature: float = 0.1
 
     # ── Embeddings ────────────────────────────────────────────────────────────
