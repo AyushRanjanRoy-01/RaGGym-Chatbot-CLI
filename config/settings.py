@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # ── App ───────────────────────────────────────────────────────────────────
     app_title: str = "Financial RAG Assistant"
     app_description: str = "Ask questions about your financial documents."
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

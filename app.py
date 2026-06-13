@@ -5,9 +5,11 @@ import streamlit as st
 
 from core.logging import setup_logging
 from config import settings
+from rag.chunkers import RecursiveChunker
 from rag.embeddings import get_embeddings
 from rag.vectorstore import get_vectorstore
 from rag.chain import build_rag_chain
+from rag.loaders import TextLoader
 
 setup_logging()
 
@@ -15,11 +17,19 @@ APP_DIR = Path(__file__).resolve().parent
 DOCS_DIR = APP_DIR / "docs"
 
 
+@st.cache_resource(show_spinner="Loading embeddings...")
+def _get_embeddings():
+    return get_embeddings()
+
+
+@st.cache_resource(show_spinner="Connecting vector store...")
+def _get_store():
+    return get_vectorstore(_get_embeddings())
+
+
 @st.cache_resource(show_spinner="Loading RAG pipeline...")
 def _load_pipeline():
-    embeddings = get_embeddings()
-    store = get_vectorstore(embeddings)
-    retriever = store.as_retriever()
+    retriever = _get_store().as_retriever()
     return build_rag_chain(retriever)
 
 
@@ -48,6 +58,14 @@ def _save_document(uploaded_file) -> Path:
     return target_path
 
 
+def _save_and_index_document(uploaded_file) -> tuple[Path, int]:
+    target_path = _save_document(uploaded_file)
+    documents = TextLoader().load(str(target_path))
+    chunks = RecursiveChunker().chunk(documents)
+    _get_store().add_documents(chunks)
+    return target_path, len(chunks)
+
+
 def main():
     st.set_page_config(
         page_title=settings.app_title,
@@ -65,20 +83,22 @@ def main():
         with st.popover("📎"):
             with st.form("upload_document_form", clear_on_submit=True):
                 uploaded_file = st.file_uploader(
-                    "Upload a document",
+                    "Upload a .txt document",
+                    type=["txt"],
                     label_visibility="collapsed",
                 )
-                submitted = st.form_submit_button("Save")
+                submitted = st.form_submit_button("Upload")
 
             if submitted:
                 if uploaded_file is None:
-                    st.warning("Choose a file first.")
+                    st.warning("Choose a .txt file first.")
                 else:
                     try:
-                        with st.spinner("Saving document..."):
-                            saved_path = _save_document(uploaded_file)
+                        with st.spinner("Saving and indexing document..."):
+                            saved_path, chunk_count = _save_and_index_document(uploaded_file)
+                        _load_pipeline.clear()
                         st.session_state.upload_notice = (
-                            f"Saved {saved_path.relative_to(APP_DIR)}."
+                            f"Saved {saved_path.relative_to(APP_DIR)} and indexed {chunk_count} chunks. Ready to chat."
                         )
                         st.rerun()
                     except Exception as exc:

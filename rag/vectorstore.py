@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from functools import lru_cache
 
 import structlog
 from langchain_core.documents import Document
@@ -8,6 +9,30 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from config import settings
 
 log = structlog.get_logger()
+
+
+@lru_cache(maxsize=None)
+def _get_local_qdrant_client(path: str):
+    from qdrant_client import QdrantClient
+    from pathlib import Path
+
+    lock = Path(path) / ".lock"
+    if lock.exists():
+        lock.unlink()
+        log.warning("qdrant_stale_lock_removed", path=path)
+
+    client = QdrantClient(path=path)
+    log.info("qdrant_init", mode="local", path=path)
+    return client
+
+
+@lru_cache(maxsize=None)
+def _get_remote_qdrant_client(url: str, api_key: str):
+    from qdrant_client import QdrantClient
+
+    client = QdrantClient(url=url, api_key=api_key or None)
+    log.info("qdrant_init", mode="remote", url=url)
+    return client
 
 
 class BaseVectorStore(ABC):
@@ -21,18 +46,15 @@ class BaseVectorStore(ABC):
 class QdrantStore(BaseVectorStore):
     def __init__(self, embeddings: Embeddings):
         from langchain_qdrant import QdrantVectorStore
-        from qdrant_client import QdrantClient
         from qdrant_client.models import Distance, VectorParams
 
         if settings.qdrant_url:
-            client = QdrantClient(
-                url=settings.qdrant_url,
-                api_key=settings.qdrant_api_key or None,
+            client = _get_remote_qdrant_client(
+                settings.qdrant_url,
+                settings.qdrant_api_key,
             )
-            log.info("qdrant_init", mode="remote", url=settings.qdrant_url)
         else:
-            client = QdrantClient(path=settings.qdrant_path)
-            log.info("qdrant_init", mode="local", path=settings.qdrant_path)
+            client = _get_local_qdrant_client(settings.qdrant_path)
 
         existing = {c.name for c in client.get_collections().collections}
         if settings.collection_name not in existing:
