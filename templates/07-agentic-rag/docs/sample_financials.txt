@@ -1,0 +1,17 @@
+Acme Corp Quarterly Earnings Summary
+
+Q1 2024: Revenue $4,200,000 | Net Income $630,000 | EBITDA $840,000
+Q2 2024: Revenue $4,550,000 | Net Income $682,000 | EBITDA $910,000
+Q3 2024: Revenue $4,800,000 | Net Income $720,000 | EBITDA $960,000
+Q4 2024: Revenue $5,100,000 | Net Income $765,000 | EBITDA $1,020,000
+
+Annual 2024 Total Revenue: $18,650,000
+Annual 2024 Net Income: $2,797,000
+Annual 2024 EBITDA: $3,730,000
+
+Gross Margin: 42% (consistent across quarters)
+Operating Expense Ratio: 22% of revenue
+Headcount: 312 full-time employees as of Dec 2024
+
+Key highlights: Strong Q4 driven by enterprise contract renewals.
+Product segment A contributed 60% of revenue; Product segment B contributed 40%.

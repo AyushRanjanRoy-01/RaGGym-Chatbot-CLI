@@ -1,0 +1,21 @@
+ACME Financial Corp — Q3 2024 Earnings Snapshot
+
+Revenue: $4.82B (+11% YoY), beating analyst consensus of $4.71B.
+Net Income: $892M, up from $741M in Q3 2023 (+20% YoY).
+EPS (diluted): $3.14 vs $2.61 prior year; street estimate was $3.05.
+Operating Margin: 22.4%, expanded 180bps driven by cost discipline.
+
+Segment Performance:
+  - Retail Banking: Net interest income $2.1B; deposit growth +6% QoQ.
+  - Wealth Management: AUM reached $310B, fee income $540M (+15% YoY).
+  - Capital Markets: Revenue $1.08B, down 4% on lower M&A advisory volumes.
+
+Balance Sheet:
+  - CET1 Ratio: 13.2% (regulatory minimum 4.5%; internal target >12%).
+  - NPL Ratio: 0.82%, stable vs 0.79% prior quarter.
+  - Loan-to-Deposit Ratio: 78%.
+
+Guidance:
+  Full-year revenue now guided $19.0–19.4B (raised from $18.5–19.0B).
+  Management flagged rising credit-card delinquencies (+25bps QoQ) as a watchpoint.
+  Expects two additional Fed rate cuts in 2024, compressing NIM ~5–8bps.

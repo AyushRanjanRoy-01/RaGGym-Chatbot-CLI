@@ -1,0 +1,90 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "raggym"
+version = "0.1.0"
+description = "An open-source gym for RAG interview prep — learn RAG by coding and by chatting with a corpus of books."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "Ayush Ranjan Roy" }]
+keywords = ["rag", "llm", "langchain", "langgraph", "interview-prep", "education", "agents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+# Base runtime: config, logging, CLI. Heavy ML/RAG deps live in extras so the
+# package installs fast and each phase pulls only what it needs.
+dependencies = [
+    "pydantic-settings>=2.2",
+    "structlog>=24.1",
+    "python-dotenv>=1.0",
+    "typer>=0.12",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+# Phase 2+ — retrieval & agents
+rag = [
+    "langchain>=0.3",
+    "langchain-core>=0.3",
+    "langgraph>=0.2",
+    "langchain-openai>=0.2",
+    "langchain-ollama>=0.2",
+    "langchain-anthropic>=0.2",
+    "langchain-qdrant>=0.2",
+    "langchain-chroma>=0.1",
+    "langchain-text-splitters>=0.3",
+    "qdrant-client>=1.12",
+    "rank-bm25>=0.2",
+]
+# Phase 1 — multimodal-ready PDF ingestion
+ingest = [
+    "docling>=2.0",
+    "pymupdf>=1.24",
+]
+# Phase 2 — chat UI
+chat = [
+    "streamlit>=1.39",
+]
+# Phase 4 — evaluation
+eval = [
+    "ragas>=0.2",
+    "datasets>=3.0",
+]
+dev = [
+    "ruff>=0.6",
+    "pytest>=8.3",
+    "pre-commit>=3.8",
+]
+# Convenience: everything
+all = ["raggym[rag,ingest,chat,eval,dev]"]
+
+[project.scripts]
+raggym = "raggym.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/ayush-ranjan-roy/raggym"
+Repository = "https://github.com/ayush-ranjan-roy/raggym"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/raggym"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"

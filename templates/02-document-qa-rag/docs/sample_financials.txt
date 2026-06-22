@@ -1,0 +1,21 @@
+ACME CORP — Q2 2024 EARNINGS SNAPSHOT (FICTIONAL)
+
+Revenue: $4.2B, up 8% year-over-year, driven by strong demand in the Cloud Services segment.
+Gross Margin: 61.3%, an improvement of 120 basis points versus Q2 2023.
+Operating Income: $820M, representing a 19.5% operating margin.
+Net Income: $610M; Diluted EPS of $2.47, beating consensus estimate of $2.31.
+
+Segment Breakdown:
+  - Cloud Services: $1.9B revenue (+22% YoY), EBIT margin 28%
+  - Enterprise Software: $1.4B revenue (+3% YoY), EBIT margin 24%
+  - Professional Services: $0.9B revenue (-2% YoY), EBIT margin 8%
+
+Balance Sheet Highlights (as of 30 Jun 2024):
+  Cash & Equivalents: $3.1B
+  Total Debt: $5.4B; Net Debt: $2.3B
+  Leverage Ratio (Net Debt / EBITDA): 2.1x
+
+Guidance — Q3 2024:
+  Revenue: $4.3B–$4.5B
+  Diluted EPS: $2.50–$2.60
+  Management cited FX headwinds (~$60M impact) and continued investment in AI infrastructure.
