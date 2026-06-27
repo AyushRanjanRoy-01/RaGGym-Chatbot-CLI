@@ -18,7 +18,7 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 LLMProvider = Literal["ollama", "openai", "anthropic"]
-EmbedProvider = Literal["ollama", "openai"]
+EmbedProvider = Literal["ollama", "openai", "fastembed"]
 VectorStore = Literal["qdrant", "chroma"]
 VisionProvider = Literal["ollama", "openai", "anthropic"]
 
@@ -58,8 +58,15 @@ class Settings(BaseSettings):
     retrieval_top_k: int = Field(default=5, gt=0)
     use_hybrid: bool = True
     use_reranker: bool = False
-    reranker_model: str = "BAAI/bge-reranker-base"
+    reranker_model: str = "ms-marco-MiniLM-L-12-v2"  # flashrank model id
     use_multi_query: bool = False
+
+    # ── Chat agent ───────────────────────────────────────────────────────────
+    # Corrective RAG: grade retrieved docs, rewrite the query and retry when the
+    # context is weak (capped at max_retries). Off by default for speed/stability
+    # with small local models.
+    use_corrective: bool = False
+    max_retries: int = Field(default=2, ge=0)
 
     # ── Vision / figure captioning ───────────────────────────────────────────
     enable_captioning: bool = False

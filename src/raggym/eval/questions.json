@@ -1,0 +1,22 @@
+[
+  {
+    "question": "What is the Reflection pattern in agentic systems?",
+    "ground_truth": "Reflection is a pattern where an agent reviews and critiques its own output, then iteratively refines it to improve quality before returning a final result."
+  },
+  {
+    "question": "What does the ReAct pattern combine?",
+    "ground_truth": "ReAct interleaves reasoning and acting: the agent produces reasoning traces (thoughts) and actions (tool calls), observing the results of each action to decide the next step."
+  },
+  {
+    "question": "What is prompt chaining and when is it useful?",
+    "ground_truth": "Prompt chaining decomposes a complex task into a sequence of smaller LLM calls where each step's output feeds the next. It is useful when a task is too complex for a single prompt and benefits from explicit intermediate steps."
+  },
+  {
+    "question": "What is tool use (function calling) in agents?",
+    "ground_truth": "Tool use lets an agent invoke external functions or APIs to fetch information or take actions beyond text generation, extending its capabilities with up-to-date data and side effects."
+  },
+  {
+    "question": "Why is routing useful in multi-agent or multi-tool systems?",
+    "ground_truth": "Routing directs a query to the most appropriate tool, sub-agent, or chain based on its content, so each request is handled by the component best suited to it."
+  }
+]

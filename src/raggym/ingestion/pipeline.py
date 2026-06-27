@@ -1,0 +1,86 @@
+"""Ingestion orchestration: PDF(s) → parse → chunk → embed → vector store.
+
+Handles a single file or a whole directory of PDFs (the multi-book corpus),
+attaching per-book metadata so retrieval can cite and filter by source.
+"""
+
+from __future__ import annotations
+
+import time
+from pathlib import Path
+
+from raggym.config import Settings, get_settings
+from raggym.core import get_logger
+from raggym.embeddings import get_embeddings
+from raggym.ingestion.chunkers import chunk_pages
+from raggym.ingestion.parsers import parse_pdf
+from raggym.vectorstore import close_vectorstore, get_vectorstore
+
+log = get_logger(__name__)
+
+
+def _discover_pdfs(target: Path) -> list[Path]:
+    if target.is_file():
+        return [target] if target.suffix.lower() == ".pdf" else []
+    return sorted(target.glob("*.pdf"))
+
+
+def ingest_path(
+    path: str | Path | None = None,
+    *,
+    settings: Settings | None = None,
+    limit_pages: int | None = None,
+    recreate: bool = False,
+    batch_size: int = 128,
+) -> dict:
+    """Ingest a PDF or a directory of PDFs into the vector store.
+
+    Args:
+        path: PDF file or directory. Defaults to ``settings.books_dir``.
+        limit_pages: ingest only the first N pages per book (quick tests).
+        recreate: drop and rebuild the collection before ingesting.
+        batch_size: number of chunks embedded/upserted per batch.
+
+    Returns:
+        Summary dict: ``{"books", "chunks", "files": [...]}``.
+    """
+    settings = settings or get_settings()
+    target = Path(path) if path else settings.books_dir
+
+    pdfs = _discover_pdfs(target)
+    if not pdfs:
+        log.warning("no_pdfs_found", path=str(target))
+        return {"books": 0, "chunks": 0, "files": []}
+
+    embeddings = get_embeddings(settings)
+    vs = get_vectorstore(embeddings, settings, create=True, recreate=recreate)
+
+    files: list[dict] = []
+    total_chunks = 0
+    try:
+        for pdf in pdfs:
+            t0 = time.perf_counter()
+            pages = parse_pdf(pdf, max_pages=limit_pages)
+            docs = chunk_pages(
+                pages,
+                book=pdf.stem,
+                source=pdf.name,
+                chunk_size=settings.chunk_size,
+                chunk_overlap=settings.chunk_overlap,
+            )
+            for i in range(0, len(docs), batch_size):
+                vs.add_documents(docs[i : i + batch_size])
+
+            elapsed = round(time.perf_counter() - t0, 1)
+            total_chunks += len(docs)
+            files.append(
+                {"book": pdf.name, "pages": len(pages), "chunks": len(docs), "seconds": elapsed}
+            )
+            log.info(
+                "book_ingested", book=pdf.name, pages=len(pages), chunks=len(docs), seconds=elapsed
+            )
+    finally:
+        close_vectorstore(vs)
+
+    log.info("ingest_complete", books=len(pdfs), chunks=total_chunks)
+    return {"books": len(pdfs), "chunks": total_chunks, "files": files}

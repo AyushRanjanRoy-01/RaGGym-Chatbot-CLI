@@ -12,8 +12,14 @@ def test_version_is_set():
 
 
 def test_settings_load_with_defaults(monkeypatch, tmp_path):
-    # Ignore any developer .env so defaults are deterministic in CI.
+    # Ignore any developer .env AND any exported env vars so defaults are
+    # deterministic regardless of the shell the tests run in.
     monkeypatch.chdir(tmp_path)
+    for key in (
+        "LLM_PROVIDER", "LLM_MODEL", "EMBED_PROVIDER", "EMBED_MODEL",
+        "VECTOR_STORE", "CHUNK_SIZE", "CHUNK_OVERLAP", "USE_HYBRID",
+    ):
+        monkeypatch.delenv(key, raising=False)
     get_settings.cache_clear()
     settings = get_settings()
     assert settings.llm_provider == "ollama"

@@ -39,15 +39,27 @@ rag = [
     "langchain-ollama>=0.2",
     "langchain-anthropic>=0.2",
     "langchain-qdrant>=0.2",
-    "langchain-chroma>=0.1",
     "langchain-text-splitters>=0.3",
     "qdrant-client>=1.12",
     "rank-bm25>=0.2",
+    "fastembed>=0.3",
 ]
-# Phase 1 — multimodal-ready PDF ingestion
+# ChromaDB fallback vector store (heavier install).
+chroma = [
+    "langchain-chroma>=0.1",
+]
+# Phase 1 — PDF ingestion (lightweight: text + code + tables as markdown)
 ingest = [
-    "docling>=2.0",
     "pymupdf>=1.24",
+    "pymupdf4llm>=0.0.17",
+]
+# Optional heavier parser (torch-based) for richer code/table/figure structure.
+parse-advanced = [
+    "docling>=2.0",
+]
+# Optional cross-encoder reranking (lightweight ONNX, no torch).
+rerank = [
+    "flashrank>=0.2",
 ]
 # Phase 2 — chat UI
 chat = [
@@ -64,7 +76,7 @@ dev = [
     "pre-commit>=3.8",
 ]
 # Convenience: everything
-all = ["raggym[rag,ingest,chat,eval,dev]"]
+all = ["raggym[rag,ingest,chroma,chat,eval,rerank,dev]"]
 
 [project.scripts]
 raggym = "raggym.cli:app"
@@ -80,6 +92,8 @@ packages = ["src/raggym"]
 line-length = 100
 target-version = "py311"
 src = ["src", "tests"]
+# `templates/` holds legacy demo scripts from another branch (untracked here).
+extend-exclude = ["templates"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "W"]

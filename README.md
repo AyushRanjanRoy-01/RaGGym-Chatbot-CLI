@@ -3,31 +3,27 @@
 > An open-source **gym for RAG interview prep** — train your RAG muscle by *coding* and by *chatting* with a corpus of books.
 
 Most people "learn RAG" by reading. RAGGym makes you **practice** it. Point it at a
-book (it ships ready for a 484-page AI engineering handbook, and is built to grow
-to many books), then either:
+book (it ships ready for a 484-page agentic-AI handbook, and is built to grow to
+many books), then either:
 
-- 💬 **Chat mode** — ask questions and get cited, grounded answers from an
-  advanced RAG pipeline (hybrid search, reranking, multi-query, self-correction).
+- 💬 **Chat mode** — ask questions and get cited, grounded answers from an advanced
+  RAG pipeline (hybrid search, multi-query, reranking, corrective self-correction).
   This is where you *see* good RAG technique in action.
-- 🧠 **Practice mode** — RAGGym pulls a concept from the book, generates a RAG
-  interview question or a coding exercise into your IDE, you solve it, and a
-  reviewer agent grades your work against the source material.
-
-> [!NOTE]
-> **Status: Phase 0 (foundation).** The package, config, logging, CLI, tests, and
-> CI are in place. Ingestion, retrieval, chat, and practice land in the phases on
-> the [roadmap](#-roadmap).
+- 🧠 **Practice mode** — RAGGym pulls a concept from the book, generates a coding
+  exercise into your IDE, you solve it, and a reviewer agent grades your code
+  against the source material.
 
 ---
 
 ## ✨ Why it's different
 
-- **Learn by doing, not just reading** — the practice loop turns passive material into reps.
-- **Advanced RAG, not toy RAG** — hybrid + rerank + multi-query + corrective (CRAG) self-correction.
-- **Multimodal-ready ingestion** — handles code blocks, tables, glossary, and callout boxes faithfully; figure/diagram captioning is a pluggable stage.
-- **Multi-book corpus** — per-book metadata and namespacing from day one.
-- **Every layer is swappable via `.env`** — LLM, embeddings, vector store, chunking, retrieval — no code changes.
-- **Measured, not vibes** — a RAGAS evaluation layer to track quality as you tune.
+- **Learn by doing** — the practice loop turns passive reading into reps with real grading.
+- **Advanced RAG, not toy RAG** — hybrid (dense+BM25) · multi-query · reranking · corrective (CRAG) self-correction, each toggleable.
+- **Cites its sources** — every answer points back to book/page/section.
+- **Multi-book corpus** — per-book metadata and citations from day one.
+- **Zero-setup option** — runs retrieval with **FastEmbed** (local ONNX, no server, no API key).
+- **Every layer swappable via `.env`** — LLM, embeddings, vector store, chunking, retrieval — no code changes.
+- **Measured, not vibes** — a RAGAS evaluation harness to track quality as you tune.
 
 ---
 
@@ -36,89 +32,102 @@ to many books), then either:
 ```
 src/raggym/
 ├── config/        typed, validated settings (pydantic-settings)
-├── core/          structured logging (structlog), shared types
-├── ingestion/     PDF → typed elements → chunk → embed → vector store   [Phase 1]
-├── retrieval/     hybrid · reranker · multi-query · router               [Phase 2]
-├── agents/        LangGraph: chat_graph + practice_graph              [Phase 2-3]
+├── core/          structured logging (structlog)
+├── ingestion/     PDF → per-page Markdown → heading-aware chunks → vector store
+├── retrieval/     RagRetriever: hybrid + multi-query + rerank
+├── agents/        LangGraph chat_graph: retrieve → (grade → rewrite)* → cite
+├── practice/      exercise generator + pytest grader + AI reviewer
 ├── llm/ embeddings/ vectorstore/   provider factories (ollama/openai/anthropic · qdrant/chroma)
-├── practice/      exercise scaffolding + pytest grading + reviewer       [Phase 3]
-├── eval/          RAGAS metrics                                          [Phase 4]
-└── apps/          Streamlit chat UI                                      [Phase 2]
+├── eval/          RAGAS metrics
+└── apps/          Streamlit chat UI
 ```
-
-**Chat graph:** `router → retrieve → rerank → grade (self-correct) → cite & answer`
-**Practice graph:** `tutor (pick concept) → exercise generator → reviewer/grader`
 
 ---
 
 ## 🚀 Quickstart
 
-> Requires Python 3.11+. [Ollama](https://ollama.com) for the zero-API-key local
-> default (or set an OpenAI/Anthropic key in `.env`).
+Requires Python 3.11+.
 
 ```bash
-# 1. Create and activate a virtual environment
 python -m venv .venv
-# Windows (PowerShell):  .venv\Scripts\Activate.ps1
-# macOS/Linux:           source .venv/bin/activate
+# Windows: .venv\Scripts\Activate.ps1   |  macOS/Linux: source .venv/bin/activate
 
-# 2. Install the package + dev tools
-pip install -e ".[dev]"
+pip install -e ".[rag,ingest,chat]"     # core + retrieval + ingestion + UI
+cp .env.example .env                     # Windows: copy .env.example .env
 
-# 3. Configure
-cp .env.example .env        # Windows: copy .env.example .env
-
-# 4. Verify the install
 raggym version
-raggym config               # prints resolved settings (secrets redacted)
-
-# 5. Run tests
-pytest
+raggym config                            # show resolved settings
 ```
 
-Local-model setup (default, no API key):
+**Pick how you run models** (edit `.env`):
+
+| Goal | `.env` settings |
+|---|---|
+| **Zero setup** (retrieval only, no LLM) | `EMBED_PROVIDER=fastembed`, `EMBED_MODEL=BAAI/bge-small-en-v1.5` |
+| **Fully local** (chat + practice) | install [Ollama](https://ollama.com); `ollama pull llama3.2:3b nomic-embed-text` (defaults) |
+| **Cloud** (fast demos) | `LLM_PROVIDER=openai` + `OPENAI_API_KEY=…` (or `anthropic`) |
+
+> Embeddings/retrieval need no LLM. Chat, practice, and eval require an LLM provider (Ollama running, or an API key).
+
+---
+
+## 📚 Usage
 
 ```bash
-ollama pull llama3.2:3b
-ollama pull nomic-embed-text
-```
+# 1) Ingest your books (drop PDFs in ./data/books/)
+raggym ingest                      # all books;  --limit-pages N for a quick test;  --recreate to rebuild
 
-Coming next (see roadmap): `raggym ingest`, `raggym chat`, `raggym practice`.
+# 2) Chat with the corpus (Streamlit)
+raggym chat
+
+# 3) Practice by coding
+raggym practice new "prompt chaining"     # writes an exercise into ./workspace/<slug>/
+#   …edit workspace/<slug>/solution.py…
+raggym practice grade ./workspace/<slug>  # runs tests + AI review
+raggym practice list
+
+# 4) Evaluate quality (needs the eval extra + an LLM provider)
+pip install -e ".[eval]"
+raggym eval
+# Note: RAGAS can lag the langchain 1.x line; if import fails, pin a compatible
+# langchain-community. The command reports this clearly rather than crashing.
+```
 
 ---
 
 ## 🧰 Tech stack
 
-| Layer | Default | Swap |
+| Layer | Default | Alternatives |
 |---|---|---|
 | LLM | Ollama `llama3.2:3b` | OpenAI `gpt-4o-mini` · Anthropic Claude |
-| Embeddings | `nomic-embed-text` | OpenAI `text-embedding-3-small` |
-| Vector DB | Qdrant (local, no Docker) | ChromaDB |
+| Embeddings | Ollama `nomic-embed-text` | OpenAI `text-embedding-3-small` · **FastEmbed** (zero-setup) |
+| Vector DB | Qdrant (local, no Docker) — dense+sparse hybrid | ChromaDB |
 | Orchestration | LangChain LCEL + LangGraph | — |
-| PDF parsing | Docling (+ PyMuPDF) | — |
+| PDF parsing | pymupdf4llm | Docling (`parse-advanced` extra) |
+| Reranking | flashrank (`rerank` extra) | — |
 | UI | Streamlit | — |
 | Config / Logging | pydantic-settings / structlog | — |
 | Eval | RAGAS | — |
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ Status
 
 - [x] **Phase 0** — repo foundation: packaging, config, logging, CLI, tests, CI
-- [ ] **Phase 1** — multimodal-ready ingestion → Qdrant, inspectable
-- [ ] **Phase 2** — retrieval engine + chat graph + Streamlit chat with citations
-- [ ] **Phase 3** — practice mode: exercise generation + coding harness + reviewer
-- [ ] **Phase 4** — RAGAS evaluation + docs + figure/diagram captioning
+- [x] **Phase 1** — ingestion: PDF → Qdrant (hybrid), 482 pages → 1431 chunks verified
+- [x] **Phase 2** — retrieval engine + LangGraph chat + Streamlit chat with citations
+- [x] **Phase 3** — practice mode: exercise generation + pytest grading + AI reviewer
+- [x] **Phase 4** — RAGAS evaluation harness (run with a provider)
+- [ ] Future — figure/diagram captioning (multimodal), streaming chat UI
 
 ---
 
 ## 🤝 Contributing
 
-Issues and PRs welcome. Set up pre-commit before your first commit:
-
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[all]"
 pre-commit install
+ruff check . && pytest
 ```
 
 ## 📄 License
