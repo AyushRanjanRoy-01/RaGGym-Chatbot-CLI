@@ -23,11 +23,21 @@ log = get_logger(__name__)
 # Prefer splitting at headings, then blank lines, then lines, then spaces.
 _SEPARATORS = ["\n# ", "\n## ", "\n### ", "\n#### ", "\n\n", "\n", " ", ""]
 _HEADING_RE = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
+_WORD_RE = re.compile(r"[A-Za-z0-9]{2,}")
 
 
 def _nearest_heading(text: str) -> str:
     matches = _HEADING_RE.findall(text)
     return matches[-1].strip() if matches else ""
+
+
+def _has_searchable_text(text: str) -> bool:
+    """Skip Markdown artifacts such as bare code fences that pollute retrieval."""
+
+    stripped = text.strip()
+    if len(stripped) < 20:
+        return False
+    return len(_WORD_RE.findall(stripped)) >= 3
 
 
 def chunk_pages(
@@ -58,7 +68,7 @@ def chunk_pages(
         pieces = splitter.split_text(page.text)
         for idx, piece in enumerate(pieces):
             piece = piece.strip()
-            if not piece:
+            if not _has_searchable_text(piece):
                 continue
             docs.append(
                 Document(

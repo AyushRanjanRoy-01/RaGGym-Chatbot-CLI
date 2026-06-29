@@ -30,6 +30,14 @@ _SYSTEM = (
     "information in the corpus to answer — do not invent facts."
 )
 
+_GREETING_TERMS = {"hello", "hey", "hi", "hola", "yo"}
+_THANKS_TERMS = {"thank", "thanks", "ty"}
+_HELP_QUERIES = {
+    "help",
+    "what can you do",
+    "who are you",
+}
+
 
 class ChatState(TypedDict, total=False):
     question: str
@@ -55,6 +63,7 @@ def _format_context(docs: list[Document]) -> tuple[str, list[dict]]:
                 "book": m.get("book"),
                 "page": m.get("page"),
                 "section": m.get("section"),
+                "snippet": d.page_content[:500],
             }
         )
     return "\n\n".join(lines), sources
@@ -64,6 +73,33 @@ def _parse_indices(text: str, n: int) -> list[int]:
     if "NONE" in text.upper():
         return []
     return sorted({int(x) for x in re.findall(r"\d+", text) if 0 <= int(x) < n})
+
+
+def _small_talk_answer(question: str) -> str | None:
+    """Answer simple non-corpus turns without paying retrieval/LLM latency."""
+
+    normalized = re.sub(r"[^a-z0-9\s]", " ", question.lower())
+    words = [word for word in normalized.split() if word]
+    phrase = " ".join(words)
+    if not words:
+        return None
+
+    if phrase in _HELP_QUERIES:
+        return (
+            "I can answer questions grounded in your uploaded PDFs. Upload a PDF in the "
+            "sidebar, click `Save + ingest`, then ask about the document."
+        )
+
+    if len(words) <= 3 and any(word in _GREETING_TERMS for word in words):
+        return (
+            "Hey, I am ready. Upload or ingest a PDF, then ask me a question about "
+            "the corpus."
+        )
+
+    if len(words) <= 4 and any(word in _THANKS_TERMS for word in words):
+        return "You got it. Ask me anything from the uploaded corpus."
+
+    return None
 
 
 def build_chat_graph(
@@ -163,6 +199,9 @@ def build_chat_graph(
 
 def answer(graph, question: str) -> dict:
     """Run the graph for a single question; return {generation, sources, documents}."""
+    if response := _small_talk_answer(question):
+        return {"generation": response, "sources": [], "documents": []}
+
     state = graph.invoke(
         {"question": question, "original_question": question, "retries": 0}
     )

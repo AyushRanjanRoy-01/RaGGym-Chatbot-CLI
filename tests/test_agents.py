@@ -1,5 +1,7 @@
 """Tests for the retrieval engine and chat graph using fakes (no live model)."""
 
+from types import SimpleNamespace
+
 import pytest
 
 pytest.importorskip("langgraph")
@@ -20,12 +22,27 @@ class _FakeVectorStore:
         return self._docs[:k]
 
 
+class _FakeQdrantVectorStore(_FakeVectorStore):
+    collection_name = "raggym"
+
+    def __init__(self, docs, payloads):
+        super().__init__(docs)
+        self.client = SimpleNamespace(
+            scroll=lambda **_: ([SimpleNamespace(payload=payload) for payload in payloads], None)
+        )
+
+
 class _FakeRetriever:
     def __init__(self, docs):
         self._docs = docs
 
     def retrieve(self, query):
         return self._docs
+
+
+class _ExplodingGraph:
+    def invoke(self, state):
+        raise AssertionError("small talk should not invoke the graph")
 
 
 def _docs():
@@ -49,6 +66,24 @@ def test_retriever_dedup_and_topk():
     assert len(out) == 3
 
 
+def test_retriever_hybrid_prefers_exact_keyword_hits():
+    vector_docs = [
+        Document(page_content="unrelated agent safety", metadata={"source": "s", "page": 1})
+    ]
+    payloads = [
+        {
+            "page_content": "BM25 is a keyword-based retrieval algorithm.",
+            "metadata": {"source": "s", "page": 2},
+        }
+    ]
+    settings = Settings(_env_file=None, retrieval_top_k=1, vector_store="qdrant", use_hybrid=True)
+    retriever = RagRetriever(settings, vectorstore=_FakeQdrantVectorStore(vector_docs, payloads))
+
+    out = retriever.retrieve("what BM25")
+
+    assert "BM25" in out[0].page_content
+
+
 def test_chat_graph_generates_with_sources():
     settings = Settings(_env_file=None, use_corrective=False)
     llm = FakeListChatModel(responses=["Prompt chaining is sequential decomposition [1]."])
@@ -57,6 +92,13 @@ def test_chat_graph_generates_with_sources():
     assert "[1]" in out["generation"]
     assert out["sources"][0]["page"] == 42
     assert out["sources"][0]["book"] == "AI"
+
+
+def test_answer_handles_greeting_without_retrieval():
+    out = answer(_ExplodingGraph(), "yo")
+    assert "ready" in out["generation"].lower()
+    assert out["sources"] == []
+    assert out["documents"] == []
 
 
 def test_corrective_graph_grades_and_generates():

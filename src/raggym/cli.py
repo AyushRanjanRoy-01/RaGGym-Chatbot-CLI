@@ -91,14 +91,20 @@ def ingest(
 @app.command()
 def chat() -> None:
     """Launch the RAG chat UI (Streamlit)."""
+    import os
     import subprocess
     import sys
     from pathlib import Path
 
     app_path = Path(__file__).parent / "apps" / "chat_app.py"
+    src_path = str(Path(__file__).resolve().parents[1])
+    env = os.environ.copy()
+    env["PYTHONPATH"] = (
+        src_path if not env.get("PYTHONPATH") else f"{src_path}{os.pathsep}{env['PYTHONPATH']}"
+    )
     console.print(f"[bold]Launching Streamlit chat…[/] ({app_path})")
     raise typer.Exit(
-        code=subprocess.call([sys.executable, "-m", "streamlit", "run", str(app_path)])
+        code=subprocess.call([sys.executable, "-m", "streamlit", "run", str(app_path)], env=env)
     )
 
 
