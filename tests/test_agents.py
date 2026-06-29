@@ -9,7 +9,7 @@ pytest.importorskip("langgraph")
 from langchain_core.documents import Document  # noqa: E402
 from langchain_core.language_models.fake_chat_models import FakeListChatModel  # noqa: E402
 
-from raggym.agents import answer, build_chat_graph  # noqa: E402
+from raggym.agents import answer, build_chat_graph, stream_answer  # noqa: E402
 from raggym.config import Settings  # noqa: E402
 from raggym.retrieval import RagRetriever  # noqa: E402
 
@@ -109,3 +109,35 @@ def test_corrective_graph_grades_and_generates():
     out = answer(graph, "What is prompt chaining?")
     assert out["generation"]
     assert out["documents"]
+
+
+def test_stream_answer_yields_sources_then_tokens():
+    settings = Settings(_env_file=None, use_corrective=False)
+    llm = FakeListChatModel(responses=["Prompt chaining is sequential decomposition [1]."])
+    events = list(
+        stream_answer(
+            "What is prompt chaining?",
+            settings=settings,
+            llm=llm,
+            retriever=_FakeRetriever(_docs()),
+        )
+    )
+    assert events[0][0] == "sources"
+    assert events[0][1][0]["page"] == 42
+    text = "".join(payload for kind, payload in events if kind == "token")
+    assert "[1]" in text
+
+
+def test_stream_answer_small_talk_skips_corpus():
+    settings = Settings(_env_file=None)
+    events = list(
+        stream_answer(
+            "hi",
+            settings=settings,
+            llm=FakeListChatModel(responses=["unused"]),
+            retriever=_FakeRetriever(_docs()),
+        )
+    )
+    assert events[0] == ("sources", [])
+    text = "".join(payload for kind, payload in events if kind == "token")
+    assert "ready" in text.lower()

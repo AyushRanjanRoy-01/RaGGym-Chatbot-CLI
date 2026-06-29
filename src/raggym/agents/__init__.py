@@ -8,6 +8,6 @@ practice_graph [Phase 3]
     → reviewer/grader (evaluate the learner's code/answer with references)
 """
 
-from raggym.agents.chat_graph import answer, build_chat_graph
+from raggym.agents.chat_graph import answer, build_chat_graph, stream_answer
 
-__all__ = ["answer", "build_chat_graph"]
+__all__ = ["answer", "build_chat_graph", "stream_answer"]

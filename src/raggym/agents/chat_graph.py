@@ -210,3 +210,55 @@ def answer(graph, question: str) -> dict:
         "sources": state.get("sources", []),
         "documents": state.get("documents", []),
     }
+
+
+def stream_answer(question, *, settings=None, llm=None, retriever=None):
+    """Stream a chat turn for a live-typing UX.
+
+    Yields ``("sources", list[dict])`` exactly once, then ``("token", str)``
+    repeatedly. Reuses the small-talk shortcut, system prompt, and context
+    formatter used by :func:`build_chat_graph`, but streams the final answer via
+    LCEL ``.stream()`` instead of a single ``invoke``. ``llm``/``retriever`` are
+    injectable for testing with fakes.
+    """
+    if response := _small_talk_answer(question):
+        yield ("sources", [])
+        yield ("token", response)
+        return
+
+    settings = settings or get_settings()
+    if llm is None:
+        from raggym.llm import get_llm
+
+        llm = get_llm(settings)
+
+    owns_retriever = False
+    if retriever is None:
+        from raggym.retrieval import RagRetriever
+
+        retriever = RagRetriever(settings, llm=llm)
+        owns_retriever = True
+    try:
+        docs = retriever.retrieve(question)
+    finally:
+        if owns_retriever:
+            retriever.close()  # free the local Qdrant lock before the LLM stream
+
+    context, sources = _format_context(docs)
+    if not docs:
+        context = "(no relevant passages found)"
+    yield ("sources", sources)
+
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+
+    chain = (
+        ChatPromptTemplate.from_messages(
+            [("system", _SYSTEM), ("human", "Question: {question}\n\nContext:\n{context}")]
+        )
+        | llm
+        | StrOutputParser()
+    )
+    for chunk in chain.stream({"question": question, "context": context}):
+        if chunk:
+            yield ("token", chunk)
