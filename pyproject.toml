@@ -41,7 +41,6 @@ rag = [
     "langchain-qdrant>=0.2",
     "langchain-text-splitters>=0.3",
     "qdrant-client>=1.12",
-    "rank-bm25>=0.2",
     "fastembed>=0.3",
 ]
 # ChromaDB fallback vector store (heavier install).
@@ -82,8 +81,8 @@ all = ["raggym[rag,ingest,chroma,chat,eval,rerank,dev]"]
 raggym = "raggym.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/ayush-ranjan-roy/raggym"
-Repository = "https://github.com/ayush-ranjan-roy/raggym"
+Homepage = "https://github.com/AyushRanjanRoy-01/RAG-Project"
+Repository = "https://github.com/AyushRanjanRoy-01/RAG-Project"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/raggym"]

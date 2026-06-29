@@ -66,22 +66,24 @@ def test_retriever_dedup_and_topk():
     assert len(out) == 3
 
 
-def test_retriever_hybrid_prefers_exact_keyword_hits():
+def test_retriever_lexical_fallback_prefers_exact_keyword_hits():
     vector_docs = [
         Document(page_content="unrelated agent safety", metadata={"source": "s", "page": 1})
     ]
     payloads = [
         {
-            "page_content": "BM25 is a keyword-based retrieval algorithm.",
+            "page_content": (
+                "EBITDA is an exact financial keyword that lexical search should recover."
+            ),
             "metadata": {"source": "s", "page": 2},
         }
     ]
     settings = Settings(_env_file=None, retrieval_top_k=1, vector_store="qdrant", use_hybrid=True)
     retriever = RagRetriever(settings, vectorstore=_FakeQdrantVectorStore(vector_docs, payloads))
 
-    out = retriever.retrieve("what BM25")
+    out = retriever.retrieve("what EBITDA")
 
-    assert "BM25" in out[0].page_content
+    assert "EBITDA" in out[0].page_content
 
 
 def test_chat_graph_generates_with_sources():

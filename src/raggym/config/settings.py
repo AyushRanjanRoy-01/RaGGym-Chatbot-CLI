@@ -57,6 +57,8 @@ class Settings(BaseSettings):
 
     # ── Retrieval ────────────────────────────────────────────────────────────
     retrieval_top_k: int = Field(default=5, gt=0)
+    # Backward-compatible name: enables dense retrieval plus local lexical
+    # fallback with RRF. It is not Qdrant sparse-vector/BM25 retrieval.
     use_hybrid: bool = True
     use_reranker: bool = False
     reranker_model: str = "ms-marco-MiniLM-L-12-v2"  # flashrank model id
