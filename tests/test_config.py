@@ -47,3 +47,19 @@ def test_invalid_log_level_rejected():
 def test_log_level_normalised_to_upper():
     s = Settings(log_level="debug", _env_file=None)
     assert s.log_level == "DEBUG"
+
+
+def test_app_mode_default_and_alias(monkeypatch):
+    monkeypatch.delenv("RAGGYM_MODE", raising=False)
+    monkeypatch.delenv("APP_MODE", raising=False)
+    assert Settings(_env_file=None).app_mode == "local"
+    monkeypatch.setenv("RAGGYM_MODE", "cloud")
+    assert Settings(_env_file=None).app_mode == "cloud"
+
+
+def test_cloud_settings_default_to_safe_values():
+    s = Settings(_env_file=None)
+    assert s.supabase_url is None
+    assert s.azure_openai_api_key is None
+    assert s.otel_enabled is False
+    assert s.langfuse_host.startswith("https://")
