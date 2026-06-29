@@ -15,6 +15,18 @@ many books), then either:
 
 ---
 
+## 🧭 How it works — RAG data flow
+
+<p align="center">
+  <img src="docs/rag-architecture.svg" alt="RAG system design: indexing and query pipelines meeting at the vector store" width="940">
+</p>
+
+- **① Indexing (offline):** documents → parse → chunk (+metadata) → embed → write to the vector store.
+- **② Query (online):** question → embed (same model) → retrieve top-k (hybrid) → rerank → build prompt (context + question) → LLM → cited answer.
+- **Corrective loop (CRAG):** grade the retrieved chunks; if weak, rewrite the query and retry.
+
+---
+
 ## ✨ Why it's different
 
 - **Learn by doing** — the practice loop turns passive reading into reps with real grading.
