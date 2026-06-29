@@ -8,6 +8,8 @@ precision, context recall). Needs an LLM provider and the ``eval`` extra.
 from __future__ import annotations
 
 import json
+import sys
+import types
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -21,6 +23,28 @@ if TYPE_CHECKING:
 log = get_logger(__name__)
 
 _DEFAULT_QUESTIONS = Path(__file__).parent / "questions.json"
+
+
+def _install_ragas_compat_shims() -> None:
+    """Bridge RAGAS imports that lag behind the latest LangChain package split."""
+
+    module_name = "langchain_community.chat_models.vertexai"
+    try:
+        __import__(module_name)
+        return
+    except ModuleNotFoundError as exc:
+        if exc.name != module_name:
+            raise
+
+    module = types.ModuleType(module_name)
+    try:
+        from langchain_google_vertexai import ChatVertexAI
+    except Exception:  # noqa: BLE001 - RAGAS only needs this for isinstance checks.
+        class ChatVertexAI:  # type: ignore[no-redef]
+            pass
+
+    module.ChatVertexAI = ChatVertexAI
+    sys.modules[module_name] = module
 
 
 def load_questions(path: str | Path | None = None) -> list[dict]:
@@ -74,6 +98,7 @@ def evaluate_pipeline(
 ) -> Any:
     """Evaluate the pipeline with RAGAS; return the RAGAS result object."""
     settings = settings or get_settings()
+    _install_ragas_compat_shims()
 
     try:
         from ragas import EvaluationDataset, evaluate

@@ -1,6 +1,9 @@
 """Round-trip test for the practice workspace + grader (no LLM)."""
 
+import json
+
 from raggym.config import Settings
+from raggym.practice.generator import _parse_exercise
 from raggym.practice.grader import run_tests
 from raggym.practice.models import Exercise
 from raggym.practice.workspace import list_exercises, write_exercise
@@ -42,3 +45,26 @@ def test_workspace_and_grader_roundtrip(tmp_path):
 
     items = list_exercises(settings)
     assert any(it["function_name"] == "reverse_string" for it in items)
+
+
+def test_parse_exercise_accepts_properties_wrapped_payload():
+    exercise = _exercise()
+    wrapped = {
+        "description": "A self-contained coding exercise grounded in the book corpus.",
+        "properties": exercise.model_dump(),
+        "required": list(Exercise.model_fields),
+    }
+
+    parsed = _parse_exercise(json.dumps(wrapped))
+
+    assert parsed.title == exercise.title
+    assert parsed.function_name == exercise.function_name
+
+
+def test_parse_exercise_accepts_fenced_json_payload():
+    exercise = _exercise()
+
+    parsed = _parse_exercise(f"```json\n{exercise.model_dump_json()}\n```")
+
+    assert parsed.title == exercise.title
+    assert parsed.function_name == exercise.function_name
