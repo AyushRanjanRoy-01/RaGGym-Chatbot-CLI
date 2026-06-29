@@ -32,10 +32,11 @@ def _install_ragas_compat_shims() -> None:
     try:
         __import__(module_name)
         return
-    except ModuleNotFoundError as exc:
-        if exc.name != module_name:
-            raise
+    except ModuleNotFoundError:
+        pass
 
+    community = _ensure_module("langchain_community")
+    chat_models = _ensure_module("langchain_community.chat_models")
     module = types.ModuleType(module_name)
     try:
         from langchain_google_vertexai import ChatVertexAI
@@ -45,6 +46,17 @@ def _install_ragas_compat_shims() -> None:
 
     module.ChatVertexAI = ChatVertexAI
     sys.modules[module_name] = module
+    community.chat_models = chat_models
+    chat_models.vertexai = module
+
+
+def _ensure_module(name: str) -> types.ModuleType:
+    module = sys.modules.get(name)
+    if isinstance(module, types.ModuleType):
+        return module
+    module = types.ModuleType(name)
+    sys.modules[name] = module
+    return module
 
 
 def load_questions(path: str | Path | None = None) -> list[dict]:
