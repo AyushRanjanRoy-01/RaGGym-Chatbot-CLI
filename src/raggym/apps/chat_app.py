@@ -159,8 +159,10 @@ with st.sidebar:
                     ingest_target = settings.books_dir if rebuild else saved_path
                     result = ingest_path(ingest_target, settings=settings, recreate=rebuild)
                 if result["chunks"]:
+                    captions = sum(file.get("visual_captions", 0) for file in result["files"])
                     st.success(
-                        f"Stored {result['chunks']} chunks from {result['books']} PDF(s). Ask away!"
+                        f"Stored {result['chunks']} chunks from {result['books']} PDF(s), "
+                        f"including {captions} visual caption(s). Ask away!"
                     )
                 else:
                     st.warning(

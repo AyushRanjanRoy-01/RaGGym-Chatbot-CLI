@@ -31,7 +31,7 @@ def _get_qdrant_store(
     from qdrant_client.models import Distance, VectorParams
 
     if settings.qdrant_url:
-        client = QdrantClient(url=settings.qdrant_url)
+        client = QdrantClient(url=settings.qdrant_url, api_key=settings.qdrant_api_key)
         log.info("qdrant_init", mode="remote", url=settings.qdrant_url)
     else:
         settings.vectorstore_dir.mkdir(parents=True, exist_ok=True)

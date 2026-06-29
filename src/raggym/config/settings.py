@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     vector_store: VectorStore = "qdrant"
     qdrant_collection: str = "raggym"
     qdrant_url: str | None = None  # None → local on-disk mode
+    qdrant_api_key: str | None = None
 
     # ── Chunking ─────────────────────────────────────────────────────────────
     chunk_size: int = Field(default=1000, gt=0)

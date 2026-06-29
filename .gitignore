@@ -1,5 +1,6 @@
 # Environment
 .env
+.streamlit/secrets.toml
 
 # Source books / corpus (large, licensed — never commit)
 data/books/*

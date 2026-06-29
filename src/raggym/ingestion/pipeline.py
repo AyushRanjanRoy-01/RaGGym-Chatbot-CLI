@@ -12,6 +12,7 @@ from pathlib import Path
 from raggym.config import Settings, get_settings
 from raggym.core import get_logger
 from raggym.embeddings import get_embeddings
+from raggym.ingestion.captioning import caption_pdf_visual_pages
 from raggym.ingestion.chunkers import chunk_pages
 from raggym.ingestion.parsers import parse_pdf
 from raggym.vectorstore import close_vectorstore, get_vectorstore
@@ -61,8 +62,13 @@ def ingest_path(
         for pdf in pdfs:
             t0 = time.perf_counter()
             pages = parse_pdf(pdf, max_pages=limit_pages)
+            visual_captions = caption_pdf_visual_pages(
+                pdf,
+                settings=settings,
+                max_pages=limit_pages,
+            )
             docs = chunk_pages(
-                pages,
+                [*pages, *visual_captions],
                 book=pdf.stem,
                 source=pdf.name,
                 chunk_size=settings.chunk_size,
@@ -74,10 +80,21 @@ def ingest_path(
             elapsed = round(time.perf_counter() - t0, 1)
             total_chunks += len(docs)
             files.append(
-                {"book": pdf.name, "pages": len(pages), "chunks": len(docs), "seconds": elapsed}
+                {
+                    "book": pdf.name,
+                    "pages": len(pages),
+                    "visual_captions": len(visual_captions),
+                    "chunks": len(docs),
+                    "seconds": elapsed,
+                }
             )
             log.info(
-                "book_ingested", book=pdf.name, pages=len(pages), chunks=len(docs), seconds=elapsed
+                "book_ingested",
+                book=pdf.name,
+                pages=len(pages),
+                visual_captions=len(visual_captions),
+                chunks=len(docs),
+                seconds=elapsed,
             )
     finally:
         close_vectorstore(vs)

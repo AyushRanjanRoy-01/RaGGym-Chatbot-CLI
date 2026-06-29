@@ -26,7 +26,7 @@ app = typer.Typer(
 )
 console = Console()
 
-_SECRET_FIELDS = {"openai_api_key", "anthropic_api_key"}
+_SECRET_FIELDS = {"openai_api_key", "anthropic_api_key", "qdrant_api_key"}
 
 
 @app.callback()
@@ -78,10 +78,17 @@ def ingest(
     table = Table(title="Ingestion complete")
     table.add_column("Book", style="cyan")
     table.add_column("Pages", justify="right")
+    table.add_column("Visual Captions", justify="right")
     table.add_column("Chunks", justify="right")
     table.add_column("Secs", justify="right")
     for f in result["files"]:
-        table.add_row(f["book"], str(f["pages"]), str(f["chunks"]), str(f["seconds"]))
+        table.add_row(
+            f["book"],
+            str(f["pages"]),
+            str(f.get("visual_captions", 0)),
+            str(f["chunks"]),
+            str(f["seconds"]),
+        )
     console.print(table)
     console.print(
         f"[green]Stored {result['chunks']} chunks from {result['books']} book(s).[/]"
