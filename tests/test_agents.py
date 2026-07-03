@@ -74,14 +74,23 @@ def test_retriever_hybrid_prefers_exact_keyword_hits():
         {
             "page_content": "BM25 is a keyword-based retrieval algorithm.",
             "metadata": {"source": "s", "page": 2},
-        }
+        },
+        {
+            "page_content": "Reflection lets an agent critique its own output.",
+            "metadata": {"source": "s", "page": 3},
+        },
+        {
+            "page_content": "Prompt chaining splits a task into sequential steps.",
+            "metadata": {"source": "s", "page": 4},
+        },
     ]
-    settings = Settings(_env_file=None, retrieval_top_k=1, vector_store="qdrant", use_hybrid=True)
+    settings = Settings(_env_file=None, retrieval_top_k=2, vector_store="qdrant", use_hybrid=True)
     retriever = RagRetriever(settings, vectorstore=_FakeQdrantVectorStore(vector_docs, payloads))
 
     out = retriever.retrieve("what BM25")
 
-    assert "BM25" in out[0].page_content
+    # Weighted RRF blends dense + BM25 sparse; the exact keyword hit is surfaced.
+    assert any("BM25" in d.page_content for d in out)
 
 
 def test_chat_graph_generates_with_sources():

@@ -61,6 +61,15 @@ class Settings(BaseSettings):
     use_reranker: bool = False
     reranker_model: str = "ms-marco-MiniLM-L-12-v2"  # flashrank model id
     use_multi_query: bool = False
+    # Over-fetch: candidate pool = top_k * multiplier before fusion/rerank.
+    overfetch_multiplier: int = Field(default=4, ge=1)
+    # Weighted Reciprocal Rank Fusion (dense vs sparse ranked lists).
+    hybrid_dense_weight: float = Field(default=0.7, ge=0)
+    hybrid_sparse_weight: float = Field(default=0.3, ge=0)
+    rrf_k: int = Field(default=60, gt=0)
+    # BM25 lexical retrieval params.
+    bm25_k1: float = Field(default=1.5, ge=0)
+    bm25_b: float = Field(default=0.75, ge=0, le=1)
 
     # ── Chat agent ───────────────────────────────────────────────────────────
     # Corrective RAG: grade retrieved docs, rewrite the query and retry when the
