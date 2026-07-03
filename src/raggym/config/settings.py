@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     # ── Chunking ─────────────────────────────────────────────────────────────
     chunk_size: int = Field(default=1000, gt=0)
     chunk_overlap: int = Field(default=200, ge=0)
+    use_dedup: bool = True
+    dedup_threshold: float = Field(default=0.9, ge=0, le=1)
 
     # ── Retrieval ────────────────────────────────────────────────────────────
     retrieval_top_k: int = Field(default=5, gt=0)

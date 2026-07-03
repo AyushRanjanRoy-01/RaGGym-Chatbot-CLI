@@ -14,6 +14,7 @@ from raggym.core import get_logger
 from raggym.embeddings import get_embeddings
 from raggym.ingestion.captioning import caption_pdf_visual_pages
 from raggym.ingestion.chunkers import chunk_pages
+from raggym.ingestion.dedup import dedupe_chunks
 from raggym.ingestion.parsers import SUPPORTED_SUFFIXES, load_document
 from raggym.vectorstore import close_vectorstore, get_vectorstore
 
@@ -74,6 +75,8 @@ def ingest_path(
                 chunk_size=settings.chunk_size,
                 chunk_overlap=settings.chunk_overlap,
             )
+            if settings.use_dedup:
+                docs = dedupe_chunks(docs, threshold=settings.dedup_threshold)
             for i in range(0, len(docs), batch_size):
                 vs.add_documents(docs[i : i + batch_size])
 
