@@ -21,6 +21,7 @@ LLMProvider = Literal["ollama", "openai", "anthropic"]
 EmbedProvider = Literal["ollama", "openai", "fastembed"]
 VectorStore = Literal["qdrant", "chroma"]
 VisionProvider = Literal["ollama", "openai", "anthropic"]
+ChunkStrategy = Literal["recursive", "fixed", "semantic"]
 
 
 class Settings(BaseSettings):
@@ -54,6 +55,7 @@ class Settings(BaseSettings):
     # ── Chunking ─────────────────────────────────────────────────────────────
     chunk_size: int = Field(default=1000, gt=0)
     chunk_overlap: int = Field(default=200, ge=0)
+    chunk_strategy: ChunkStrategy = "recursive"
     use_dedup: bool = True
     dedup_threshold: float = Field(default=0.9, ge=0, le=1)
 
