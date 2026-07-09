@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     chunk_strategy: ChunkStrategy = "recursive"
     use_dedup: bool = True
     dedup_threshold: float = Field(default=0.9, ge=0, le=1)
+    use_parse_cache: bool = True
 
     # ── Retrieval ────────────────────────────────────────────────────────────
     retrieval_top_k: int = Field(default=5, gt=0)
@@ -83,6 +84,7 @@ class Settings(BaseSettings):
     books_dir: Path = Path("./data/books")
     vectorstore_dir: Path = Path("./vectorstore")
     workspace_dir: Path = Path("./workspace")
+    parse_cache_dir: Path = Path("./data/.parse_cache")
 
     # ── Logging ──────────────────────────────────────────────────────────────
     log_level: str = "INFO"
