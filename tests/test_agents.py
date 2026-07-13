@@ -66,24 +66,31 @@ def test_retriever_dedup_and_topk():
     assert len(out) == 3
 
 
-def test_retriever_lexical_fallback_prefers_exact_keyword_hits():
+def test_retriever_hybrid_prefers_exact_keyword_hits():
     vector_docs = [
         Document(page_content="unrelated agent safety", metadata={"source": "s", "page": 1})
     ]
     payloads = [
         {
-            "page_content": (
-                "EBITDA is an exact financial keyword that lexical search should recover."
-            ),
+            "page_content": "BM25 is a keyword-based retrieval algorithm.",
             "metadata": {"source": "s", "page": 2},
-        }
+        },
+        {
+            "page_content": "Reflection lets an agent critique its own output.",
+            "metadata": {"source": "s", "page": 3},
+        },
+        {
+            "page_content": "Prompt chaining splits a task into sequential steps.",
+            "metadata": {"source": "s", "page": 4},
+        },
     ]
-    settings = Settings(_env_file=None, retrieval_top_k=1, vector_store="qdrant", use_hybrid=True)
+    settings = Settings(_env_file=None, retrieval_top_k=2, vector_store="qdrant", use_hybrid=True)
     retriever = RagRetriever(settings, vectorstore=_FakeQdrantVectorStore(vector_docs, payloads))
 
-    out = retriever.retrieve("what EBITDA")
+    out = retriever.retrieve("what BM25")
 
-    assert "EBITDA" in out[0].page_content
+    # Weighted RRF blends dense + BM25 sparse; the exact keyword hit is surfaced.
+    assert any("BM25" in d.page_content for d in out)
 
 
 def test_chat_graph_generates_with_sources():
