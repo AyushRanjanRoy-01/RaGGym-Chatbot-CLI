@@ -14,11 +14,12 @@ techniques enabled in settings:
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from raggym.config import Settings, get_settings
 from raggym.core import get_logger
-from raggym.retrieval.rerank import rerank
+from raggym.retrieval.rerank import rerank, reranker_available
 
 if TYPE_CHECKING:
     from langchain_core.documents import Document
@@ -26,6 +27,19 @@ if TYPE_CHECKING:
     from langchain_core.vectorstores import VectorStore
 
 log = get_logger(__name__)
+
+
+@dataclass
+class RetrievalSignals:
+    """Which retrieval techniques actually ran for the last query."""
+
+    hybrid: bool = False
+    multi_query_requested: bool = False
+    multi_query_applied: bool = False
+    reranker_requested: bool = False
+    reranker_available: bool = False
+    reranker_applied: bool = False
+
 
 _TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]+")
 
@@ -69,6 +83,7 @@ class RagRetriever:
     ) -> None:
         self.settings = settings or get_settings()
         self._llm = llm
+        self.last_signals = RetrievalSignals()
         if vectorstore is not None:
             self.vs = vectorstore
         else:
@@ -164,10 +179,16 @@ class RagRetriever:
     # ── retrieval ─────────────────────────────────────────────────────────────
     def retrieve(self, query: str) -> list[Document]:
         s = self.settings
+        signals = RetrievalSignals(
+            hybrid=s.use_hybrid,
+            multi_query_requested=s.use_multi_query,
+            reranker_requested=s.use_reranker,
+        )
         queries = [query]
         if s.use_multi_query:
             try:
                 queries = self._expand(query)
+                signals.multi_query_applied = len(queries) > 1
             except Exception as exc:  # noqa: BLE001 — never fail retrieval on expansion
                 log.warning("multi_query_failed", error=str(exc))
 
@@ -183,17 +204,27 @@ class RagRetriever:
         fused = _rrf_fuse(ranked_lists, k=s.rrf_k)
 
         if s.use_reranker:
-            docs = rerank(query, fused, model=s.reranker_model, top_n=s.retrieval_top_k)
+            signals.reranker_available = reranker_available()
+            if signals.reranker_available:
+                docs = rerank(query, fused, model=s.reranker_model, top_n=s.retrieval_top_k)
+                signals.reranker_applied = True
+            else:
+                log.warning(
+                    "reranker_requested_but_unavailable", hint="pip install 'raggym[rerank]'"
+                )
+                docs = fused[: s.retrieval_top_k]
         else:
             docs = fused[: s.retrieval_top_k]
 
+        self.last_signals = signals
         log.info(
             "retrieve_done",
             variants=len(queries),
             candidates=len(fused),
             returned=len(docs),
-            hybrid=s.use_hybrid,
-            reranked=s.use_reranker,
+            hybrid=signals.hybrid,
+            multi_query=signals.multi_query_applied,
+            reranked=signals.reranker_applied,
         )
         return docs
 

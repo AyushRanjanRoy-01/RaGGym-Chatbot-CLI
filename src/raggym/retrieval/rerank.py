@@ -18,6 +18,15 @@ log = get_logger(__name__)
 _RANKERS: dict = {}
 
 
+def reranker_available() -> bool:
+    """True if the optional ``flashrank`` reranker dependency is importable."""
+    try:
+        import flashrank  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
 def rerank(query: str, docs: list[Document], *, model: str, top_n: int) -> list[Document]:
     """Rerank ``docs`` against ``query`` with a cross-encoder; return top-N."""
     if not docs:

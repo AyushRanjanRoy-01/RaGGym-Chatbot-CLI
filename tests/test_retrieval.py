@@ -67,6 +67,31 @@ class _FakeQdrant:
         return []
 
 
+class _DenseVS:
+    def similarity_search(self, query, k=4):
+        return [_doc("a dense hit about agents", 1)]
+
+
+def test_signals_track_reranker_request():
+    s = Settings(_env_file=None, use_hybrid=False, use_reranker=True)
+    r = RagRetriever(s, vectorstore=_DenseVS())
+    r.retrieve("query")
+    assert r.last_signals.reranker_requested is True
+    # applied only if the flashrank dependency is available
+    assert r.last_signals.reranker_applied == r.last_signals.reranker_available
+
+
+def test_signals_multi_query_applied():
+    from langchain_core.language_models.fake_chat_models import FakeListChatModel
+
+    s = Settings(_env_file=None, use_hybrid=False, use_multi_query=True)
+    llm = FakeListChatModel(responses=["alt one\nalt two\nalt three"])
+    r = RagRetriever(s, llm=llm, vectorstore=_DenseVS())
+    r.retrieve("original question")
+    assert r.last_signals.multi_query_requested is True
+    assert r.last_signals.multi_query_applied is True
+
+
 def test_bm25_ranks_exact_term_first():
     # A discriminative corpus: "BM25"/"ranking" appear in only one of several docs.
     payloads = [

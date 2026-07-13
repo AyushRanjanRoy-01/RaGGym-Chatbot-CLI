@@ -6,6 +6,6 @@ Advanced RAG retrieval, each technique toggleable via settings:
     reranker    cross-encoder re-scoring of candidates (flashrank)
 """
 
-from raggym.retrieval.engine import RagRetriever
+from raggym.retrieval.engine import RagRetriever, RetrievalSignals
 
-__all__ = ["RagRetriever"]
+__all__ = ["RagRetriever", "RetrievalSignals"]
