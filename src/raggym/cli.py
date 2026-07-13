@@ -141,6 +141,28 @@ def evaluate_cmd(
     console.print(result)
 
 
+@app.command("chunk-report")
+def chunk_report(path: str = typer.Argument(..., help="Document to analyze.")) -> None:
+    """Compare chunking strategies on a document (counts + size stats)."""
+    from raggym.ingestion.parsers import load_document
+    from raggym.ingestion.report import compare_chunking_strategies
+
+    pages = load_document(path)
+    rows = compare_chunking_strategies(pages)
+    table = Table(title=f"Chunking strategies · {path}")
+    for col in ("Strategy", "Chunks", "Avg chars", "Min", "Max"):
+        table.add_column(col)
+    for r in rows:
+        table.add_row(
+            r["strategy"],
+            str(r["chunks"]),
+            str(r["avg_chars"]),
+            str(r["min_chars"]),
+            str(r["max_chars"]),
+        )
+    console.print(table)
+
+
 app.add_typer(practice_app, name="practice")
 
 
