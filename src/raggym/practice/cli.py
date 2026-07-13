@@ -53,3 +53,22 @@ def list_cmd():
         console.print(
             f"- [cyan]{it['dir']}[/] — {it.get('concept', '?')} ({it.get('difficulty', '?')})"
         )
+
+
+@practice_app.command("web")
+def web():
+    """Launch the in-browser practice IDE (Monaco + Pyodide, Streamlit)."""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    app_path = Path(__file__).resolve().parents[1] / "apps" / "practice_app.py"
+    src = str(Path(__file__).resolve().parents[2])
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = src if not existing else f"{src}{os.pathsep}{existing}"
+    console.print(f"[bold]Launching browser practice IDE…[/] ({app_path})")
+    raise typer.Exit(
+        code=subprocess.call([sys.executable, "-m", "streamlit", "run", str(app_path)], env=env)
+    )
