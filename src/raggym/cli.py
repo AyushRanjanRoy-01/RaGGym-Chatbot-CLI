@@ -26,7 +26,17 @@ app = typer.Typer(
 )
 console = Console()
 
-_SECRET_FIELDS = {"openai_api_key", "anthropic_api_key", "qdrant_api_key"}
+_SECRET_FIELDS = {
+    "openai_api_key",
+    "anthropic_api_key",
+    "qdrant_api_key",
+    "azure_openai_api_key",
+    "supabase_anon_key",
+    "supabase_service_key",
+    "supabase_db_url",
+    "langfuse_secret_key",
+    "applicationinsights_connection_string",
+}
 
 
 @app.callback()

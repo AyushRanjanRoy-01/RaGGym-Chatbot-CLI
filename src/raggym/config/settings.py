@@ -14,13 +14,14 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 LLMProvider = Literal["ollama", "openai", "anthropic"]
 EmbedProvider = Literal["ollama", "openai", "fastembed"]
 VectorStore = Literal["qdrant", "chroma"]
 VisionProvider = Literal["ollama", "openai", "anthropic"]
+AppMode = Literal["local", "cloud"]
 
 
 class Settings(BaseSettings):
@@ -33,6 +34,13 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    # ── Mode ───────────────────────────────────────────────────────────────────
+    # local → fastembed + on-disk Qdrant + console logs, no cloud/auth ($0).
+    # cloud → Supabase (pgvector) + Azure + OTel/Langfuse + auth.
+    app_mode: AppMode = Field(
+        default="local", validation_alias=AliasChoices("RAGGYM_MODE", "APP_MODE")
+    )
+
     # ── LLM ──────────────────────────────────────────────────────────────────
     llm_provider: LLMProvider = "ollama"
     llm_model: str = "llama3.2:3b"
@@ -40,6 +48,11 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+    # Azure OpenAI (cloud LLM option)
+    azure_openai_endpoint: str | None = None
+    azure_openai_api_key: str | None = None
+    azure_openai_api_version: str = "2024-10-21"
+    azure_openai_deployment: str | None = None
 
     # ── Embeddings ───────────────────────────────────────────────────────────
     embed_provider: EmbedProvider = "ollama"
@@ -50,6 +63,12 @@ class Settings(BaseSettings):
     qdrant_collection: str = "raggym"
     qdrant_url: str | None = None  # None → local on-disk mode
     qdrant_api_key: str | None = None
+
+    # ── Cloud data — Supabase (cloud mode) ─────────────────────────────────────
+    supabase_url: str | None = None
+    supabase_anon_key: str | None = None
+    supabase_service_key: str | None = None
+    supabase_db_url: str | None = None  # Postgres connection string for pgvector
 
     # ── Chunking ─────────────────────────────────────────────────────────────
     chunk_size: int = Field(default=1000, gt=0)
@@ -85,6 +104,13 @@ class Settings(BaseSettings):
     # ── Logging ──────────────────────────────────────────────────────────────
     log_level: str = "INFO"
     log_json: bool = False
+
+    # ── Observability (cloud mode) ─────────────────────────────────────────────
+    otel_enabled: bool = False
+    applicationinsights_connection_string: str | None = None
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
 
     # ── App ──────────────────────────────────────────────────────────────────
     app_env: Literal["dev", "prod"] = "dev"
