@@ -60,6 +60,10 @@ parse-advanced = [
 rerank = [
     "flashrank>=0.2",
 ]
+# Optional semantic (embedding-boundary) chunking.
+semantic = [
+    "langchain-experimental>=0.3",
+]
 # Phase 2 — chat UI
 chat = [
     "streamlit>=1.39",
