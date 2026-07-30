@@ -1,7 +1,7 @@
 """Retrieval engine [Phase 2].
 
-Advanced RAG retrieval, each technique toggleable via settings:
-    hybrid      dense (vector) + sparse (BM25) fusion (Qdrant)
+RAG retrieval, each technique toggleable via settings:
+    hybrid      dense vector search + local lexical fallback, fused with RRF
     multi_query LLM query expansion for recall
     reranker    cross-encoder re-scoring of candidates (flashrank)
 """

@@ -1,0 +1,26 @@
+.git
+.github
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+.mypy_cache
+vectorstore/
+workspace/
+eval_results/
+data/books/*
+!data/books/.gitkeep
+templates/
+book/
+docs/
+tests/
+terraform/
+*.log
+.env
+.streamlit/secrets.toml
+# keep README.md (referenced by pyproject) — only ignore other markdown
+*.md
+!README.md
