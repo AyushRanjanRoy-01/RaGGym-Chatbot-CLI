@@ -1,10 +1,11 @@
-"""Retrieval engine: hybrid search + optional multi-query + optional rerank.
+"""Retrieval engine: dense search + optional lexical fallback, multi-query, rerank.
 
 ``RagRetriever`` wraps the configured vector store and applies the retrieval
 techniques enabled in settings:
 
-* **hybrid** (dense + sparse) is handled by the Qdrant store itself.
-* **multi-query** expands the question into paraphrases (LLM) and unions results.
+* **lexical fallback** scans Qdrant payload text for exact terms and is fused
+  with dense search by reciprocal-rank fusion.
+* **multi-query** expands the question into paraphrases and fuses the results.
 * **rerank** re-scores the candidate pool with a cross-encoder and keeps top-k.
 """
 
@@ -66,6 +67,35 @@ def _query_terms(query: str) -> list[str]:
 def _lexical_score(terms: list[str], text: str) -> int:
     haystack = text.lower()
     return sum(haystack.count(term) for term in terms)
+
+
+def _doc_key(doc: Document) -> tuple:
+    return (
+        doc.metadata.get("source"),
+        doc.metadata.get("page"),
+        doc.metadata.get("chunk"),
+        doc.page_content[:128],
+    )
+
+
+def _rrf_fuse(ranked_lists: list[list[Document]], *, rank_constant: int = 60) -> list[Document]:
+    """Fuse ranked result lists with reciprocal-rank fusion."""
+
+    scores: dict[tuple, float] = {}
+    docs: dict[tuple, Document] = {}
+    best_rank: dict[tuple, int] = {}
+    for ranked in ranked_lists:
+        seen: set[tuple] = set()
+        for rank, doc in enumerate(ranked, start=1):
+            key = _doc_key(doc)
+            if key in seen:
+                continue
+            seen.add(key)
+            docs.setdefault(key, doc)
+            scores[key] = scores.get(key, 0.0) + 1.0 / (rank_constant + rank)
+            best_rank[key] = min(best_rank.get(key, rank), rank)
+
+    return sorted(docs.values(), key=lambda doc: (-scores[_doc_key(doc)], best_rank[_doc_key(doc)]))
 
 
 class RagRetriever:
@@ -163,21 +193,16 @@ class RagRetriever:
                 log.warning("multi_query_failed", error=str(exc))
 
         fetch_k = self.settings.retrieval_top_k * (4 if self.settings.use_reranker else 1)
-        collected: dict[tuple, Document] = {}
+        ranked_lists: list[list[Document]] = []
         for q in queries:
             if self.settings.use_hybrid:
-                for doc in self._keyword_search(q, limit=fetch_k):
-                    key = (
-                        doc.metadata.get("source"),
-                        doc.metadata.get("page"),
-                        doc.page_content[:64],
-                    )
-                    collected.setdefault(key, doc)
-            for doc in self.vs.similarity_search(q, k=fetch_k):
-                key = (doc.metadata.get("source"), doc.metadata.get("page"), doc.page_content[:64])
-                collected.setdefault(key, doc)
+                lexical_docs = self._keyword_search(q, limit=fetch_k)
+                if lexical_docs:
+                    ranked_lists.append(lexical_docs)
+            ranked_lists.append(self.vs.similarity_search(q, k=fetch_k))
 
-        docs = list(collected.values())
+        docs = _rrf_fuse(ranked_lists)
+        candidate_count = len(docs)
         if self.settings.use_reranker:
             docs = rerank(
                 query, docs, model=self.settings.reranker_model, top_n=self.settings.retrieval_top_k
@@ -188,7 +213,7 @@ class RagRetriever:
         log.info(
             "retrieve_done",
             variants=len(queries),
-            candidates=len(collected),
+            candidates=candidate_count,
             returned=len(docs),
         )
         return docs

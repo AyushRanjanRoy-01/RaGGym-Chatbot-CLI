@@ -21,6 +21,7 @@ LLMProvider = Literal["ollama", "openai", "anthropic"]
 EmbedProvider = Literal["ollama", "openai", "fastembed"]
 VectorStore = Literal["qdrant", "chroma"]
 VisionProvider = Literal["ollama", "openai", "anthropic"]
+ChunkStrategy = Literal["recursive", "fixed", "semantic"]
 
 
 class Settings(BaseSettings):
@@ -54,9 +55,15 @@ class Settings(BaseSettings):
     # ── Chunking ─────────────────────────────────────────────────────────────
     chunk_size: int = Field(default=1000, gt=0)
     chunk_overlap: int = Field(default=200, ge=0)
+    chunk_strategy: ChunkStrategy = "recursive"
+    use_dedup: bool = True
+    dedup_threshold: float = Field(default=0.9, ge=0, le=1)
+    use_parse_cache: bool = True
 
     # ── Retrieval ────────────────────────────────────────────────────────────
     retrieval_top_k: int = Field(default=5, gt=0)
+    # Backward-compatible name: enables dense retrieval plus local lexical
+    # fallback with RRF. It is not Qdrant sparse-vector/BM25 retrieval.
     use_hybrid: bool = True
     use_reranker: bool = False
     reranker_model: str = "ms-marco-MiniLM-L-12-v2"  # flashrank model id
@@ -79,6 +86,7 @@ class Settings(BaseSettings):
     books_dir: Path = Path("./data/books")
     vectorstore_dir: Path = Path("./vectorstore")
     workspace_dir: Path = Path("./workspace")
+    parse_cache_dir: Path = Path("./data/.parse_cache")
 
     # ── Logging ──────────────────────────────────────────────────────────────
     log_level: str = "INFO"
