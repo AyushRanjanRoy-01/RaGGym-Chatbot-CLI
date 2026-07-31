@@ -4,7 +4,7 @@ Returns a LangChain chat model for the configured provider so the rest of the
 codebase stays provider-agnostic:
 
 * ``ollama``    — local server (default), e.g. ``llama3.2:3b`` (no API key)
-* ``openai``    — e.g. ``gpt-4o-mini`` (fast, great for live demos)
+* ``openai``    — e.g. ``gpt-5.4-mini`` (fast, good for hosted demos)
 * ``anthropic`` — e.g. ``claude-sonnet-4-6`` (strong tutor/reviewer)
 """
 
@@ -23,7 +23,7 @@ log = get_logger(__name__)
 # Fallback model when the configured LLM_MODEL is still the ollama default but a
 # cloud provider is selected.
 _OLLAMA_DEFAULT = "llama3.2:3b"
-_FALLBACK = {"openai": "gpt-4o-mini", "anthropic": "claude-sonnet-4-6"}
+_FALLBACK = {"openai": "gpt-5.4-mini", "anthropic": "claude-sonnet-4-6"}
 
 
 def get_llm(settings: Settings | None = None) -> BaseChatModel:
