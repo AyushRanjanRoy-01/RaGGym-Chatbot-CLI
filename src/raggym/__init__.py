@@ -2,8 +2,8 @@
 
 Learn Retrieval-Augmented Generation two ways over a growing corpus of books:
 
-* **Chat mode** — advanced RAG Q&A (hybrid search, reranking, multi-query,
-  self-correction) with citations.
+* **Chat mode** — RAG Q&A with dense retrieval, lexical fallback, optional
+  reranking, multi-query, self-correction, and citations.
 * **Practice mode** — generated coding exercises and interview questions you
   solve in your IDE, graded by a reviewer agent against the source material.
 """

@@ -2,12 +2,13 @@
 
 > An open-source **gym for RAG interview prep** — train your RAG muscle by *coding* and by *chatting* with a corpus of books.
 
-Most people "learn RAG" by reading. RAGGym makes you **practice** it. Point it at a
-book (it ships ready for a 484-page agentic-AI handbook, and is built to grow to
-many books), then either:
+Most people "learn RAG" by reading. RAGGym makes you **practice** it. Point it at
+PDFs in `data/books/` (the corpus itself is kept out of git because books are
+large and often licensed), then either:
 
-- 💬 **Chat mode** — ask questions and get cited, grounded answers from an advanced
-  RAG pipeline (hybrid search, multi-query, reranking, corrective self-correction).
+- 💬 **Chat mode** — ask questions and get cited answers from a practical RAG
+  pipeline: dense vector search, optional lexical fallback, multi-query,
+  reranking, and corrective self-correction.
   This is where you *see* good RAG technique in action.
 - 🧠 **Practice mode** — RAGGym pulls a concept from the book, generates a coding
   exercise into your IDE, you solve it, and a reviewer agent grades your code
@@ -21,8 +22,8 @@ many books), then either:
   <img src="docs/rag-architecture.svg" alt="RAG system design: indexing and query pipelines meeting at the vector store" width="940">
 </p>
 
-- **① Indexing (offline):** documents → parse → chunk (+metadata) → embed → write to the vector store.
-- **② Query (online):** question → embed (same model) → retrieve top-k (hybrid) → rerank → build prompt (context + question) → LLM → cited answer.
+- **① Indexing (offline):** PDFs → parse to Markdown → chunk (+metadata) → embed → write to the vector store.
+- **② Query (online):** question → embed (same model) → retrieve top-k (dense + optional lexical fallback) → optional rerank → build prompt (context + question) → LLM → cited answer.
 - **Corrective loop (CRAG):** grade the retrieved chunks; if weak, rewrite the query and retry.
 
 ---
@@ -30,8 +31,8 @@ many books), then either:
 ## ✨ Why it's different
 
 - **Learn by doing** — the practice loop turns passive reading into reps with real grading.
-- **Advanced RAG, not toy RAG** — hybrid (dense+BM25) · multi-query · reranking · corrective (CRAG) self-correction, each toggleable.
-- **Cites its sources** — every answer points back to book/page/section.
+- **Practical RAG, not just a demo prompt** — dense retrieval · lexical fallback with RRF · multi-query · reranking · corrective (CRAG) self-correction, each toggleable.
+- **Built for citations** — retrieved chunks keep book/page/section metadata, and the chat prompt requires inline source markers.
 - **Multi-book corpus** — per-book metadata and citations from day one.
 - **Zero-setup option** — runs retrieval with **FastEmbed** (local ONNX, no server, no API key).
 - **Every layer swappable via `.env`** — LLM, embeddings, vector store, chunking, retrieval — no code changes.
@@ -46,7 +47,7 @@ src/raggym/
 ├── config/        typed, validated settings (pydantic-settings)
 ├── core/          structured logging (structlog)
 ├── ingestion/     PDF → per-page Markdown → heading-aware chunks → vector store
-├── retrieval/     RagRetriever: hybrid + multi-query + rerank
+├── retrieval/     RagRetriever: dense search + lexical fallback + multi-query + rerank
 ├── agents/        LangGraph chat_graph: retrieve → (grade → rewrite)* → cite
 ├── practice/      exercise generator + pytest grader + AI reviewer
 ├── llm/ embeddings/ vectorstore/   provider factories (ollama/openai/anthropic · qdrant/chroma)
@@ -111,9 +112,9 @@ raggym eval
 
 | Layer | Default | Alternatives |
 |---|---|---|
-| LLM | Ollama `llama3.2:3b` | OpenAI `gpt-4o-mini` · Anthropic Claude |
+| LLM | Ollama `llama3.2:3b` | OpenAI `gpt-5.4-mini` · Anthropic `claude-sonnet-4-6` |
 | Embeddings | Ollama `nomic-embed-text` | OpenAI `text-embedding-3-small` · **FastEmbed** (zero-setup) |
-| Vector DB | Qdrant (local, no Docker) — dense+sparse hybrid | ChromaDB |
+| Vector DB | Qdrant (local, no Docker, or remote server) | ChromaDB |
 | Orchestration | LangChain LCEL + LangGraph | — |
 | PDF parsing | pymupdf4llm | Docling (`parse-advanced` extra) |
 | Reranking | flashrank (`rerank` extra) | — |
@@ -126,11 +127,12 @@ raggym eval
 ## 🗺️ Status
 
 - [x] **Phase 0** — repo foundation: packaging, config, logging, CLI, tests, CI
-- [x] **Phase 1** — ingestion: PDF → Qdrant (hybrid), 482 pages → 1431 chunks verified
+- [x] **Phase 1** — ingestion: PDF → chunks → Qdrant/Chroma, with local corpus runs verified
 - [x] **Phase 2** — retrieval engine + LangGraph chat + Streamlit chat with citations
 - [x] **Phase 3** — practice mode: exercise generation + pytest grading + AI reviewer
 - [x] **Phase 4** — RAGAS evaluation harness (run with a provider)
-- [ ] Future — figure/diagram captioning (multimodal), streaming chat UI
+- [x] **Phase 5** — Streamlit uploads, streamed chat responses, and optional OpenAI vision captions for visual-heavy PDF pages
+- [ ] Future — native sparse-vector/BM25 hybrid retrieval, API backend, auth, and richer evaluation reports
 
 ---
 
