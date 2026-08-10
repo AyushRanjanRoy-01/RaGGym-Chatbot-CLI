@@ -42,8 +42,8 @@
     <!-- ===== Vector store (amber, central) ===== -->
     <rect x="430" y="196" width="150" height="76" rx="10" fill="#f59e0b" fill-opacity=".18" stroke="#f59e0b" stroke-width="1.9"/>
     <text x="505" y="224" font-size="13.5" font-weight="750" text-anchor="middle">Vector Store</text>
-    <text x="505" y="241" font-size="9.5" text-anchor="middle" opacity=".72">dense + BM25 · HNSW</text>
-    <text x="505" y="256" font-size="9.5" text-anchor="middle" opacity=".72">Qdrant / pgvector</text>
+    <text x="505" y="241" font-size="9.5" text-anchor="middle" opacity=".72">dense vectors · HNSW</text>
+    <text x="505" y="256" font-size="9.5" text-anchor="middle" opacity=".72">Qdrant / Chroma</text>
 
     <!-- ===== Query nodes ===== -->
     <rect x="24" y="330" width="122" height="50" rx="8" fill="#8b5cf6" fill-opacity=".15" stroke="#8b5cf6" stroke-width="1.4"/>
@@ -54,7 +54,7 @@
     <text x="219" y="366" font-size="9.5" text-anchor="middle" opacity=".72">same model</text>
     <rect x="292" y="330" width="122" height="50" rx="8" fill="#8b5cf6" fill-opacity=".15" stroke="#8b5cf6" stroke-width="1.4"/>
     <text x="353" y="351" font-size="13" font-weight="650" text-anchor="middle">Retrieve</text>
-    <text x="353" y="366" font-size="9.5" text-anchor="middle" opacity=".72">top-k · hybrid</text>
+    <text x="353" y="366" font-size="9.5" text-anchor="middle" opacity=".72">top-k · lexical fallback</text>
     <rect x="426" y="330" width="122" height="50" rx="8" fill="#8b5cf6" fill-opacity=".15" stroke="#8b5cf6" stroke-width="1.4"/>
     <text x="487" y="351" font-size="13" font-weight="650" text-anchor="middle">Rerank</text>
     <text x="487" y="366" font-size="9.5" text-anchor="middle" opacity=".72">cross-encoder · opt</text>

@@ -12,8 +12,9 @@ from pathlib import Path
 from raggym.config import Settings, get_settings
 from raggym.core import get_logger
 from raggym.embeddings import get_embeddings
+from raggym.ingestion.cache import load_pages_cached
 from raggym.ingestion.captioning import caption_pdf_visual_pages
-from raggym.ingestion.chunkers import chunk_pages
+from raggym.ingestion.chunkers import chunk_pages_by_strategy
 from raggym.ingestion.dedup import dedupe_chunks
 from raggym.ingestion.parsers import SUPPORTED_SUFFIXES, load_document
 from raggym.vectorstore import close_vectorstore, get_vectorstore
@@ -62,18 +63,28 @@ def ingest_path(
     try:
         for src in paths:
             t0 = time.perf_counter()
-            pages = load_document(src, max_pages=limit_pages)
+            if settings.use_parse_cache:
+                pages = load_pages_cached(
+                    src,
+                    cache_dir=settings.parse_cache_dir,
+                    loader=load_document,
+                    max_pages=limit_pages,
+                )
+            else:
+                pages = load_document(src, max_pages=limit_pages)
             visual_captions = (
                 caption_pdf_visual_pages(src, settings=settings, max_pages=limit_pages)
                 if src.suffix.lower() == ".pdf"
                 else []
             )
-            docs = chunk_pages(
+            docs = chunk_pages_by_strategy(
                 [*pages, *visual_captions],
+                strategy=settings.chunk_strategy,
                 book=src.stem,
                 source=src.name,
                 chunk_size=settings.chunk_size,
                 chunk_overlap=settings.chunk_overlap,
+                embeddings=embeddings,
             )
             if settings.use_dedup:
                 docs = dedupe_chunks(docs, threshold=settings.dedup_threshold)

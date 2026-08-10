@@ -16,7 +16,7 @@ streamlit_app.py
 
 ```toml
 LLM_PROVIDER = "openai"
-LLM_MODEL = "gpt-4o-mini"
+LLM_MODEL = "gpt-5.4-mini"
 OPENAI_API_KEY = "sk-..."
 
 EMBED_PROVIDER = "openai"
@@ -27,7 +27,7 @@ QDRANT_COLLECTION = "raggym"
 
 ENABLE_CAPTIONING = true
 VISION_PROVIDER = "openai"
-VISION_MODEL = "gpt-4o-mini"
+VISION_MODEL = "gpt-5.4-mini"
 ```
 
 ## Persistence

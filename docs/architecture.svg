@@ -1,6 +1,6 @@
 <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ttl dsc">
   <title id="ttl">RAGGym system architecture</title>
-  <desc id="dsc">Layered architecture: clients, LangGraph agents, RAG core, swappable providers, data, and Azure infra, with a cross-cutting rail for config, observability, security and eval. Solid boxes run in both local and cloud modes; dashed boxes are cloud-only.</desc>
+  <desc id="dsc">Layered architecture: clients, LangGraph agents, RAG core, swappable providers, data, and optional cloud deployment, with a cross-cutting rail for config, observability, security and eval. Solid boxes run in both local and cloud modes; dashed boxes are cloud-only.</desc>
   <rect x="0" y="0" width="1000" height="500" fill="#ffffff"/>
   <style>
     .t{font-family:var(--font-voice,ui-sans-serif,system-ui,-apple-system,sans-serif);fill:var(--text-primary,#20232e)}
@@ -58,7 +58,7 @@
     <rect x="152" y="204" width="247" height="40" rx="8" fill="#6366f1" fill-opacity=".15" stroke="#6366f1" stroke-width="1.4"/>
     <text class="t bt" x="275" y="220">Ingestion</text><text class="t bs" x="275" y="235">PDF → chunks → embed</text>
     <rect x="413" y="204" width="247" height="40" rx="8" fill="#6366f1" fill-opacity=".15" stroke="#6366f1" stroke-width="1.4"/>
-    <text class="t bt" x="536" y="220">Retrieval</text><text class="t bs" x="536" y="235">hybrid · multi-query · rerank</text>
+    <text class="t bt" x="536" y="220">Retrieval</text><text class="t bs" x="536" y="235">dense + lexical · rerank</text>
   </g>
 
   <!-- ===== T4 Providers (amber) ===== -->
@@ -67,11 +67,11 @@
   <text class="t" x="36" y="308" font-size="8.5" opacity=".6">swappable</text>
   <g>
     <rect x="152" y="272" width="160" height="40" rx="8" fill="#f59e0b" fill-opacity=".16" stroke="#f59e0b" stroke-width="1.4"/>
-    <text class="t bt" x="232" y="288">LLM</text><text class="t bs" x="232" y="303">Ollama·OpenAI·Anthropic·Azure</text>
+    <text class="t bt" x="232" y="288">LLM</text><text class="t bs" x="232" y="303">Ollama·OpenAI·Anthropic</text>
     <rect x="326" y="272" width="160" height="40" rx="8" fill="#f59e0b" fill-opacity=".16" stroke="#f59e0b" stroke-width="1.4"/>
     <text class="t bt" x="406" y="288">Embeddings</text><text class="t bs" x="406" y="303">fastembed·Ollama·OpenAI</text>
     <rect x="500" y="272" width="160" height="40" rx="8" fill="#f59e0b" fill-opacity=".16" stroke="#f59e0b" stroke-width="1.4"/>
-    <text class="t bt" x="580" y="288">Vector store</text><text class="t bs" x="580" y="303">Qdrant·pgvector·Chroma</text>
+    <text class="t bt" x="580" y="288">Vector store</text><text class="t bs" x="580" y="303">Qdrant·Chroma</text>
   </g>
 
   <!-- ===== T5 Data (teal) ===== -->
@@ -81,24 +81,24 @@
     <rect x="152" y="340" width="160" height="40" rx="8" fill="#14b8a6" fill-opacity=".15" stroke="#14b8a6" stroke-width="1.4"/>
     <text class="t bt" x="232" y="356">Qdrant</text><text class="t bs" x="232" y="371">local on-disk (default)</text>
     <rect x="326" y="340" width="160" height="40" rx="8" fill="#14b8a6" fill-opacity=".15" stroke="#14b8a6" stroke-width="1.4" stroke-dasharray="5 4"/>
-    <text class="t bt" x="406" y="356">Supabase pgvector</text><text class="t bs" x="406" y="371">Postgres + HNSW (cloud)</text>
+    <text class="t bt" x="406" y="356">Qdrant Cloud</text><text class="t bs" x="406" y="371">persistent remote vectors</text>
     <rect x="500" y="340" width="160" height="40" rx="8" fill="#14b8a6" fill-opacity=".15" stroke="#14b8a6" stroke-width="1.4"/>
     <text class="t bt" x="580" y="356">Books corpus</text><text class="t bs" x="580" y="371">PDFs in data/books</text>
   </g>
 
   <!-- ===== Infra band (green, cloud) ===== -->
   <rect x="24" y="404" width="648" height="72" rx="12" fill="#22c55e" fill-opacity=".06" stroke="#22c55e" stroke-opacity=".4" stroke-dasharray="6 4"/>
-  <text class="t tl" x="36" y="421" fill="#16a34a">AZURE INFRA · Terraform</text>
-  <text class="t" x="210" y="421" font-size="9" opacity=".6">cloud-only · cost ≈ $0</text>
+  <text class="t tl" x="36" y="421" fill="#16a34a">CLOUD DEPLOYMENT</text>
+  <text class="t" x="210" y="421" font-size="9" opacity=".6">optional · Streamlit Community Cloud</text>
   <g>
     <rect x="152" y="430" width="119" height="36" rx="8" fill="#22c55e" fill-opacity=".15" stroke="#22c55e" stroke-width="1.3" stroke-dasharray="5 4"/>
-    <text class="t bt" x="211" y="446">Container Apps</text><text class="t bs" x="211" y="459">scale-to-zero</text>
+    <text class="t bt" x="211" y="446">Streamlit Cloud</text><text class="t bs" x="211" y="459">app hosting</text>
     <rect x="281" y="430" width="119" height="36" rx="8" fill="#22c55e" fill-opacity=".15" stroke="#22c55e" stroke-width="1.3" stroke-dasharray="5 4"/>
-    <text class="t bt" x="340" y="446">Key Vault</text><text class="t bs" x="340" y="459">secrets</text>
+    <text class="t bt" x="340" y="446">Streamlit Secrets</text><text class="t bs" x="340" y="459">API keys</text>
     <rect x="410" y="430" width="119" height="36" rx="8" fill="#22c55e" fill-opacity=".15" stroke="#22c55e" stroke-width="1.3" stroke-dasharray="5 4"/>
-    <text class="t bt" x="469" y="446">App Insights</text><text class="t bs" x="469" y="459">telemetry</text>
+    <text class="t bt" x="469" y="446">Qdrant Cloud</text><text class="t bs" x="469" y="459">persistent store</text>
     <rect x="539" y="430" width="119" height="36" rx="8" fill="#22c55e" fill-opacity=".15" stroke="#22c55e" stroke-width="1.3" stroke-dasharray="5 4"/>
-    <text class="t bt" x="598" y="446">GHCR</text><text class="t bs" x="598" y="459">image registry</text>
+    <text class="t bt" x="598" y="446">GitHub</text><text class="t bs" x="598" y="459">source + CI</text>
   </g>
 
   <!-- ===== Cross-cutting rail (slate) ===== -->
@@ -107,18 +107,18 @@
   <g>
     <rect x="696" y="60" width="280" height="94" rx="10" fill="#64748b" fill-opacity=".1" stroke="#64748b" stroke-width="1.3"/>
     <text class="t bt" x="836" y="92">Config</text>
-    <text class="t bs" x="836" y="110">pydantic-settings · structlog</text>
-    <text class="t bs" x="836" y="124">RAGGYM_MODE: local | cloud</text>
+    <text class="t bs" x="836" y="110">pydantic-settings · .env</text>
+    <text class="t bs" x="836" y="124">Streamlit secrets in cloud</text>
 
     <rect x="696" y="166" width="280" height="94" rx="10" fill="#64748b" fill-opacity=".1" stroke="#64748b" stroke-width="1.3" stroke-dasharray="5 4"/>
     <text class="t bt" x="836" y="198">Observability</text>
-    <text class="t bs" x="836" y="216">OpenTelemetry (GenAI semconv)</text>
-    <text class="t bs" x="836" y="230">App Insights · Langfuse</text>
+    <text class="t bs" x="836" y="216">structlog application logs</text>
+    <text class="t bs" x="836" y="230">Streamlit/GitHub run logs</text>
 
     <rect x="696" y="272" width="280" height="94" rx="10" fill="#64748b" fill-opacity=".1" stroke="#64748b" stroke-width="1.3" stroke-dasharray="5 4"/>
     <text class="t bt" x="836" y="304">Security</text>
-    <text class="t bs" x="836" y="322">Key Vault · managed identity</text>
-    <text class="t bs" x="836" y="336">Supabase RLS · CI scans</text>
+    <text class="t bs" x="836" y="322">.env and secrets ignored</text>
+    <text class="t bs" x="836" y="336">CI lint + tests</text>
 
     <rect x="696" y="378" width="280" height="94" rx="10" fill="#64748b" fill-opacity=".1" stroke="#64748b" stroke-width="1.3"/>
     <text class="t bt" x="836" y="410">Eval</text>

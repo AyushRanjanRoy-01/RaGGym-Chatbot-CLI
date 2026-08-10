@@ -1,0 +1,70 @@
+name: Deploy (Azure Container Apps)
+
+# Builds the image, pushes to GHCR, and rolls it out to Azure Container Apps
+# on every merge to main. DORMANT until Azure setup is done: the job is gated on
+# the repo variable AZURE_DEPLOY_ENABLED, so merges stay green until you opt in.
+#
+# One-time setup (Settings → Secrets and variables → Actions):
+#   Secret    AZURE_CREDENTIALS        service principal JSON
+#                                       (az ad sp create-for-rbac --sdk-auth ...)
+#   Variable  AZURE_DEPLOY_ENABLED     set to "true" to arm this workflow
+#   Variable  AZURE_RESOURCE_GROUP     e.g. raggym-rg
+#   Variable  AZURE_CONTAINERAPP_NAME  e.g. raggym-app
+# The image is published to GHCR using the built-in GITHUB_TOKEN (no PAT needed).
+# Infra (resource group, Container App with ingress targetPort 8501, Key Vault)
+# is provisioned by Terraform — see docs/AZURE_SETUP.md.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: ${{ vars.AZURE_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image name (GHCR requires lowercase)
+        run: |
+          echo "IMAGE=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):${{ github.sha }}" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Roll out new image to Container Apps
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az containerapp update \
+              --name "${{ vars.AZURE_CONTAINERAPP_NAME }}" \
+              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --image "$IMAGE"

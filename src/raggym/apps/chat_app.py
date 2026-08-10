@@ -134,7 +134,7 @@ with st.sidebar:
                 "llm": f"{settings.llm_provider}:{settings.llm_model}",
                 "embeddings": f"{settings.embed_provider}:{settings.embed_model}",
                 "vector_store": settings.vector_store,
-                "hybrid": settings.use_hybrid,
+                "lexical_fallback": settings.use_hybrid,
                 "reranker": settings.use_reranker,
                 "corrective": settings.use_corrective,
                 "top_k": settings.retrieval_top_k,
